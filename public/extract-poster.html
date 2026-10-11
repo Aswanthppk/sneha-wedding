@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><title>Extract Poster</title></head>
+<body style="margin:0;background:#0c1929;">
+<video id="vid" src="/assets/intro-video.mp4" muted playsinline preload="auto" crossorigin="anonymous"></video>
+<canvas id="cvs"></canvas>
+<script>
+  const vid = document.getElementById('vid');
+  const cvs = document.getElementById('cvs');
+  vid.addEventListener('loadeddata', () => {
+    vid.currentTime = 0.05;
+  });
+  vid.addEventListener('seeked', () => {
+    cvs.width = vid.videoWidth;
+    cvs.height = vid.videoHeight;
+    const ctx = cvs.getContext('2d');
+    ctx.drawImage(vid, 0, 0);
+    const dataUrl = cvs.toDataURL('image/jpeg', 0.92);
+    fetch('/api/save-poster', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl })
+    }).then(r => console.log('Saved poster!')).catch(console.error);
+  });
+</script>
+</body>
+</html>

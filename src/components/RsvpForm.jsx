@@ -85,7 +85,7 @@ export default function RsvpForm() {
         {/* Monogram & divider */}
         <div className="flex flex-col items-center text-[#1a2c5b]">
           <span className="font-display text-lg md:text-xl tracking-[0.25em] font-light leading-none">
-            V | S
+            S | V
           </span>
           <svg width="48" height="12" viewBox="0 0 48 12" fill="none" className="text-[#1a2c5b] mt-1.5 opacity-80">
             <path d="M24 9C20 9 16 7.5 12 7" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" />

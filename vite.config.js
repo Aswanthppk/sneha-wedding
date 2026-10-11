@@ -19,6 +19,20 @@ function rsvpBackendPlugin() {
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
           return res.end(renderAdminDashboard(readRsvps()));
         }
+        if (req.method === 'POST' && url.pathname === '/api/save-poster') {
+          let body = '';
+          req.on('data', c => { body += c; });
+          req.on('end', () => {
+            const data = JSON.parse(body);
+            const base64Data = data.image.replace(/^data:image\/\w+;base64,/, '');
+            import('fs').then(fs => {
+              fs.writeFileSync('./public/assets/envelope-poster.jpg', Buffer.from(base64Data, 'base64'));
+              fs.writeFileSync('./dist/assets/envelope-poster.jpg', Buffer.from(base64Data, 'base64'));
+              res.end('saved');
+            });
+          });
+          return;
+        }
         next();
       });
     }

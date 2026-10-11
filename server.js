@@ -110,7 +110,7 @@ export function renderAdminDashboard(rsvps) {
     <html lang="en">
     <head>
       <meta charset="utf-8">
-      <title>Wedding RSVP Dashboard — Vaishnav & Sneha</title>
+      <title>Wedding RSVP Dashboard — Sneha & Vaishnav</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f8fafc; color:#0f172a; margin:0; padding:24px; }
@@ -131,7 +131,7 @@ export function renderAdminDashboard(rsvps) {
       <div class="container">
         <div class="header">
           <div>
-            <h1>💍 Vaishnav & Sneha — RSVP Responses</h1>
+            <h1>💍 Sneha & Vaishnav — RSVP Responses</h1>
             <p style="margin:4px 0 0 0; color:#64748b; font-size:14px;">Real-time guest attendance records</p>
           </div>
           <div>

@@ -76,7 +76,7 @@ export default function App() {
         {/* Monogram Top */}
         <Reveal animation="fade-down" duration={1000} delay={200} className="flex-none pt-4 md:pt-6">
           <div className="scale-100 md:scale-125 transition-transform duration-500 animate-float">
-            <img src="/assets/monogram-DluBM9hV.webp" alt="V & S monogram" className="h-28 w-28 object-contain" />
+            <img src="/assets/monogram-DluBM9hV.webp" alt="S & V monogram" className="h-28 w-28 object-contain" />
           </div>
         </Reveal>
 
@@ -85,13 +85,13 @@ export default function App() {
           <Reveal animation="fade-up" duration={1000} delay={400}>
             <h1 className="font-script leading-[1.2] flex items-center justify-center gap-x-4 gap-y-2 flex-wrap px-4">
               <span className="text-[var(--foreground)] text-4xl sm:text-5xl md:text-7xl tracking-wide font-normal">
-                Vaishnav
+                Sneha
               </span>
               <span className="text-[var(--gold)] text-2xl sm:text-3xl md:text-5xl font-light italic lowercase px-1">
                 Weds
               </span>
               <span className="text-[var(--foreground)] text-4xl sm:text-5xl md:text-7xl tracking-wide font-normal">
-                Sneha
+                Vaishnav
               </span>
             </h1>
           </Reveal>
@@ -183,11 +183,51 @@ export default function App() {
 
         <div className="flex-1 flex flex-col items-center justify-center w-full max-w-[440px] md:max-w-[640px] py-20 pt-4 md:pt-8">
           <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 md:gap-x-6 gap-y-4 items-center w-full px-1">
-            {/* Groom side */}
+            {/* Bride side */}
             <Reveal animation="fade-right" duration={1000} delay={200}>
               <div className="flex flex-col items-center text-center px-1">
                 <h3 className="font-script text-3xl sm:text-4xl md:text-5xl text-primary leading-none italic font-normal">
-                  Vaishnav Vijayan
+                  Sneha
+                </h3>
+                <div className="flex items-center justify-center gap-1.5 my-2 opacity-70">
+                  <span className="h-[0.5px] w-6 bg-gradient-to-r from-transparent to-[var(--gold)]" />
+                  <span className="text-[var(--gold)] text-[6px]">✦</span>
+                  <span className="h-[0.5px] w-6 bg-gradient-to-l from-transparent to-[var(--gold)]" />
+                </div>
+                <p className="font-caps text-[0.4rem] sm:text-[0.45rem] tracking-[0.2em] text-[var(--muted-foreground)] mb-1 uppercase font-semibold">
+                  D/o
+                </p>
+                <p className="font-display text-[0.65rem] sm:text-[0.7rem] md:text-sm text-primary tracking-wide leading-normal uppercase font-semibold">
+                  Sudheesan P. T.{' '}
+                  <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>{' '}
+                  Jisha K.
+                </p>
+                <p className="font-caps text-[0.4rem] sm:text-[0.45rem] tracking-[0.2em] text-[var(--muted-foreground)] mt-3 mb-1 uppercase font-semibold">
+                  Residence
+                </p>
+                <p className="font-display text-[0.6rem] sm:text-[0.65rem] md:text-xs text-[var(--muted-foreground)] tracking-wide leading-tight uppercase font-semibold">
+                  Pilanthottathil House{' '}
+                  <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>
+                  <br />
+                  Kokkallur, Balussery, Kozhikode
+                </p>
+              </div>
+            </Reveal>
+
+            {/* Center Monogram Divider */}
+            <Reveal animation="zoom-in" duration={1000} delay={400} className="flex flex-col items-center justify-between self-stretch min-h-[160px] md:min-h-[220px] relative select-none px-1">
+              <div className="w-[1px] flex-1 bg-gradient-to-b from-transparent to-[var(--gold)]/75" />
+              <div className="my-2 scale-90 sm:scale-100 md:scale-125 transition-transform duration-300 animate-float-delayed">
+                <img src="/assets/monogram-DluBM9hV.webp" alt="S & V monogram" className="h-20 w-20 object-contain" />
+              </div>
+              <div className="w-[1px] flex-1 bg-gradient-to-t from-transparent to-[var(--gold)]/75" />
+            </Reveal>
+
+            {/* Groom side */}
+            <Reveal animation="fade-left" duration={1000} delay={200}>
+              <div className="flex flex-col items-center text-center px-1">
+                <h3 className="font-script text-3xl sm:text-4xl md:text-5xl text-primary leading-none italic font-normal">
+                  Vaishnav
                 </h3>
                 <div className="flex items-center justify-center gap-1.5 my-2 opacity-70">
                   <span className="h-[0.5px] w-6 bg-gradient-to-r from-transparent to-[var(--gold)]" />
@@ -200,7 +240,7 @@ export default function App() {
                 <p className="font-display text-[0.65rem] sm:text-[0.7rem] md:text-sm text-primary tracking-wide leading-normal uppercase font-semibold">
                   Vijayan Kunnummal{' '}
                   <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>{' '}
-                  Smt. Vaishnavam Poyilil
+                  Sreeja P
                 </p>
                 <p className="font-caps text-[0.4rem] sm:text-[0.45rem] tracking-[0.2em] text-[var(--muted-foreground)] mt-3 mb-1 uppercase font-semibold">
                   Residence
@@ -210,46 +250,6 @@ export default function App() {
                   <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>
                   <br />
                   Malayamma, Kozhikode
-                </p>
-              </div>
-            </Reveal>
-
-            {/* Center Monogram Divider */}
-            <Reveal animation="zoom-in" duration={1000} delay={400} className="flex flex-col items-center justify-between self-stretch min-h-[160px] md:min-h-[220px] relative select-none px-1">
-              <div className="w-[1px] flex-1 bg-gradient-to-b from-transparent to-[var(--gold)]/75" />
-              <div className="my-2 scale-90 sm:scale-100 md:scale-125 transition-transform duration-300 animate-float-delayed">
-                <img src="/assets/monogram-DluBM9hV.webp" alt="V & S monogram" className="h-20 w-20 object-contain" />
-              </div>
-              <div className="w-[1px] flex-1 bg-gradient-to-t from-transparent to-[var(--gold)]/75" />
-            </Reveal>
-
-            {/* Bride side */}
-            <Reveal animation="fade-left" duration={1000} delay={200}>
-              <div className="flex flex-col items-center text-center px-1">
-                <h3 className="font-script text-3xl sm:text-4xl md:text-5xl text-primary leading-none italic font-normal">
-                  Sneha Sudheeran
-                </h3>
-                <div className="flex items-center justify-center gap-1.5 my-2 opacity-70">
-                  <span className="h-[0.5px] w-6 bg-gradient-to-r from-transparent to-[var(--gold)]" />
-                  <span className="text-[var(--gold)] text-[6px]">✦</span>
-                  <span className="h-[0.5px] w-6 bg-gradient-to-l from-transparent to-[var(--gold)]" />
-                </div>
-                <p className="font-caps text-[0.4rem] sm:text-[0.45rem] tracking-[0.2em] text-[var(--muted-foreground)] mb-1 uppercase font-semibold">
-                  D/o
-                </p>
-                <p className="font-display text-[0.65rem] sm:text-[0.7rem] md:text-sm text-primary tracking-wide leading-normal uppercase font-semibold">
-                  Sudheeran P. T.{' '}
-                  <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>{' '}
-                  Jisha K.
-                </p>
-                <p className="font-caps text-[0.4rem] sm:text-[0.45rem] tracking-[0.2em] text-[var(--muted-foreground)] mt-3 mb-1 uppercase font-semibold">
-                  Residence
-                </p>
-                <p className="font-display text-[0.6rem] sm:text-[0.65rem] md:text-xs text-[var(--muted-foreground)] tracking-wide leading-tight uppercase font-semibold">
-                  Pilanthottathil House{' '}
-                  <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>
-                  <br />
-                  Kokkallur, Balussery, Kozhikode
                 </p>
               </div>
             </Reveal>
