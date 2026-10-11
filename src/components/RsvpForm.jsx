@@ -7,12 +7,6 @@ const eventsList = [
     title: 'Wedding Ceremony (Muhurtham)',
     location: 'Sree Gokulam Convention Centre, Balussery, Kozhikode',
     mapUrl: 'https://www.google.com/maps/search/?api=1&query=Sree+Gokulam+Convention+Centre+Balussery+Kozhikode'
-  },
-  {
-    id: 'reception',
-    title: 'Wedding Reception',
-    location: 'Convention Centre, Muthalam, Kozhikode',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Convention+Centre+Muthalam+Kozhikode'
   }
 ];
 
@@ -20,7 +14,7 @@ export default function RsvpForm() {
   const [name, setName] = useState('');
   const [attending, setAttending] = useState(null);
   const [guestCount, setGuestCount] = useState(1);
-  const [selectedEvents, setSelectedEvents] = useState(['wedding', 'reception']);
+  const [selectedEvents, setSelectedEvents] = useState(['wedding']);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);

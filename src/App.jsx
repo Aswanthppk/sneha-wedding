@@ -360,9 +360,10 @@ export default function App() {
       </section>
 
       {/* --------------------------------------------------------------
-          SECTION 5: WEDDING RECEPTION
+          SECTION 5: WEDDING RECEPTION (Hidden)
           Background: Uploaded Kerala Backwaters Watercolour Scene
          -------------------------------------------------------------- */}
+      {false && (
       <section id="reception" className="relative isolate min-h-screen px-6 py-20 bg-[#e7ebf0]">
         <img
           src="/assets/Kerala Temple Backwaters Watercolour Invitation.png"
@@ -444,6 +445,7 @@ export default function App() {
           </Reveal>
         </div>
       </section>
+      )}
 
       {/* --------------------------------------------------------------
           SECTION 6: RSVP

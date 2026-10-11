@@ -2,11 +2,12 @@ import React, { useRef, useState, useEffect } from 'react';
 
 export default function EnvelopeIntro({ onOpen }) {
   const videoRef = useRef(null);
+  const safetyTimeoutRef = useRef(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [isFading, setIsFading] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Ensure video is properly muted at DOM level for mobile browsers (iOS Safari / Android Chrome)
+  // Configure video element for mobile devices without auto-playing
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
@@ -15,26 +16,34 @@ export default function EnvelopeIntro({ onOpen }) {
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', 'true');
-      // Attempt muted initial playback so first frame decodes immediately
-      video.play().catch(() => {
-        // Autoplay can wait for user tap, which is expected
-      });
+      video.setAttribute('x5-playsinline', 'true');
+      video.pause();
+      video.currentTime = 0;
     }
+
+    return () => {
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current);
+      }
+    };
   }, []);
 
   const handleVideoEnded = () => {
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current);
+      safetyTimeoutRef.current = null;
+    }
     setIsFading(true);
     setTimeout(() => {
       setIsDismissed(true);
     }, 1000);
   };
 
-  const handleClick = () => {
+  const handleOpen = () => {
     if (!hasStarted) {
       setHasStarted(true);
       const video = videoRef.current;
       if (video) {
-        // Keep video muted so mobile OS does not block playback
         video.defaultMuted = true;
         video.muted = true;
         video.currentTime = 0;
@@ -42,7 +51,7 @@ export default function EnvelopeIntro({ onOpen }) {
         if (playPromise !== undefined) {
           playPromise.catch((err) => {
             console.warn('Mobile video playback prevented:', err);
-            // If mobile blocks video, smoothly transition so guest is never stuck
+            // If device policy blocks video, smoothly transition so guest is never stuck
             handleVideoEnded();
           });
         }
@@ -50,10 +59,15 @@ export default function EnvelopeIntro({ onOpen }) {
 
       if (onOpen) onOpen();
 
-      // Mobile safety timeout: Ensure transition occurs even if onEnded is delayed or blocked
-      setTimeout(() => {
+      // Mobile safety timeout: Ensure transition occurs even if onEnded is delayed
+      const maxDuration =
+        video?.duration && !isNaN(video.duration) && video.duration > 0
+          ? Math.ceil((video.duration + 1.5) * 1000)
+          : 11000;
+
+      safetyTimeoutRef.current = setTimeout(() => {
         handleVideoEnded();
-      }, 6500);
+      }, maxDuration);
     } else {
       // Tap again while playing dismisses intro smoothly
       handleVideoEnded();
@@ -75,7 +89,7 @@ export default function EnvelopeIntro({ onOpen }) {
 
   return (
     <div
-      onClick={handleClick}
+      onClick={handleOpen}
       className="fixed inset-0 z-[100] bg-[#0c1929] cursor-pointer flex items-center justify-center select-none overflow-hidden"
       style={{
         opacity: isFading ? 0 : 1,
@@ -86,28 +100,136 @@ export default function EnvelopeIntro({ onOpen }) {
       <video
         ref={videoRef}
         src="/assets/intro-video.mp4"
-        poster="/assets/hero-bg-BoJZa16A.webp"
+        poster="/assets/envelope-poster.jpg"
         className="w-full h-full object-cover"
         playsInline
         webkit-playsinline="true"
         x5-playsinline="true"
-        autoPlay
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="false"
         muted
         preload="auto"
+        controls={false}
+        disablePictureInPicture
+        disableRemotePlayback
         onEnded={handleVideoEnded}
         onError={() => {
           console.warn('Video failed to load on device, revealing invitation');
           handleVideoEnded();
         }}
       />
-      
+
+      {/* Skip button during playback */}
+      {hasStarted && !isFading && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleVideoEnded();
+          }}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            zIndex: 30,
+            padding: '8px 18px',
+            borderRadius: '9999px',
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            color: '#ffffff',
+            fontSize: '11px',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            pointerEvents: 'auto'
+          }}
+        >
+          Skip ✕
+        </button>
+      )}
+
+      {/* Tap to Open Button before playing */}
       {!hasStarted && (
-        <div className="absolute inset-0 flex items-end justify-center pb-20 sm:pb-24 pointer-events-none">
-          <div className="inline-flex items-center justify-center px-16 sm:px-20 md:px-24 py-4 sm:py-4.5 rounded-full bg-white/25 backdrop-blur-lg border border-white/50 text-white font-caps text-xs sm:text-sm tracking-[0.35em] uppercase font-semibold whitespace-nowrap animate-pulse shadow-[0_8px_32px_rgba(0,0,0,0.35)] ring-1 ring-white/30">
-            TAP TO OPEN
-          </div>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '48px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px',
+            zIndex: 20,
+            width: '100%',
+            maxWidth: '360px',
+            padding: '0 20px',
+            boxSizing: 'border-box',
+            pointerEvents: 'none'
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpen();
+            }}
+            style={{
+              pointerEvents: 'auto',
+              width: '100%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              padding: '14px 28px',
+              borderRadius: '9999px',
+              background: 'rgba(255, 255, 255, 0.22)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.65)',
+              color: '#ffffff',
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: '13px',
+              letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+            className="animate-pulse"
+          >
+            <span>OPEN INVITATION</span>
+            <svg
+              style={{ width: '16px', height: '16px', color: '#f6d365' }}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+          <span
+            style={{
+              color: 'rgba(255, 255, 255, 0.75)',
+              fontSize: '11px',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 400,
+              textShadow: '0 1px 4px rgba(0,0,0,0.6)'
+            }}
+          >
+            Tap anywhere to open
+          </span>
         </div>
       )}
     </div>
   );
 }
+
