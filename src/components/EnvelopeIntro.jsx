@@ -6,31 +6,58 @@ export default function EnvelopeIntro({ onOpen }) {
   const [isFading, setIsFading] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  const handleClick = () => {
-    if (!hasStarted) {
-      setHasStarted(true);
-      const video = videoRef.current;
-      if (video) {
-        video.muted = false;
-        video.currentTime = 0;
-        video.play().catch(() => {
-          // Fallback for browser autoplay audio policy
-          video.muted = true;
-          video.play().catch(() => {});
-        });
-      }
-      if (onOpen) onOpen();
-    } else {
-      // Tapping while playing dismisses intro smoothly
-      handleVideoEnded();
+  // Ensure video is properly muted at DOM level for mobile browsers (iOS Safari / Android Chrome)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.defaultMuted = true;
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', 'true');
+      // Attempt muted initial playback so first frame decodes immediately
+      video.play().catch(() => {
+        // Autoplay can wait for user tap, which is expected
+      });
     }
-  };
+  }, []);
 
   const handleVideoEnded = () => {
     setIsFading(true);
     setTimeout(() => {
       setIsDismissed(true);
     }, 1000);
+  };
+
+  const handleClick = () => {
+    if (!hasStarted) {
+      setHasStarted(true);
+      const video = videoRef.current;
+      if (video) {
+        // Keep video muted so mobile OS does not block playback
+        video.defaultMuted = true;
+        video.muted = true;
+        video.currentTime = 0;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn('Mobile video playback prevented:', err);
+            // If mobile blocks video, smoothly transition so guest is never stuck
+            handleVideoEnded();
+          });
+        }
+      }
+
+      if (onOpen) onOpen();
+
+      // Mobile safety timeout: Ensure transition occurs even if onEnded is delayed or blocked
+      setTimeout(() => {
+        handleVideoEnded();
+      }, 6500);
+    } else {
+      // Tap again while playing dismisses intro smoothly
+      handleVideoEnded();
+    }
   };
 
   useEffect(() => {
@@ -49,7 +76,7 @@ export default function EnvelopeIntro({ onOpen }) {
   return (
     <div
       onClick={handleClick}
-      className="fixed inset-0 z-[100] bg-black cursor-pointer flex items-center justify-center select-none"
+      className="fixed inset-0 z-[100] bg-[#0c1929] cursor-pointer flex items-center justify-center select-none overflow-hidden"
       style={{
         opacity: isFading ? 0 : 1,
         transition: 'opacity 1000ms ease-in-out',
@@ -59,11 +86,19 @@ export default function EnvelopeIntro({ onOpen }) {
       <video
         ref={videoRef}
         src="/assets/intro-video.mp4"
+        poster="/assets/hero-bg-BoJZa16A.webp"
         className="w-full h-full object-cover"
         playsInline
-        preload="auto"
+        webkit-playsinline="true"
+        x5-playsinline="true"
+        autoPlay
         muted
+        preload="auto"
         onEnded={handleVideoEnded}
+        onError={() => {
+          console.warn('Video failed to load on device, revealing invitation');
+          handleVideoEnded();
+        }}
       />
       
       {!hasStarted && (

@@ -223,6 +223,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const ext = path.extname(filePath).toLowerCase();
+      const stat = fs.statSync(filePath);
+      const fileSize = stat.size;
       const mimeTypes = {
         '.html': 'text/html; charset=utf-8',
         '.js': 'application/javascript',
@@ -237,8 +239,31 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         '.woff': 'font/woff',
         '.woff2': 'font/woff2'
       };
-      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
-      fs.createReadStream(filePath).pipe(res);
+      const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+      // Support HTTP Range requests (crucial for mobile iOS Safari & Chrome video streaming)
+      const range = req.headers.range;
+      if (range && (ext === '.mp4' || ext === '.mp3')) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const fileStream = fs.createReadStream(filePath, { start, end });
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': contentType,
+        });
+        fileStream.pipe(res);
+      } else {
+        res.writeHead(200, {
+          'Content-Length': fileSize,
+          'Content-Type': contentType,
+          'Accept-Ranges': 'bytes'
+        });
+        fs.createReadStream(filePath).pipe(res);
+      }
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not found');
