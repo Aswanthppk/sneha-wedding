@@ -1,0 +1,36 @@
+:root {
+  --navy-deep: #152a4a;
+  --navy-muted: #5a6e85;
+  --gold-antique: #c5a059;
+  --gold-muted: #b88e3f;
+  --gold-light: #dfc282;
+  --surface-ivory: rgba(254, 252, 248, 0.92);
+  --card-radius-lg: 32px;
+  --card-radius-sm: 24px;
+}
+
+.font-script {
+  font-family: 'Great Vibes', cursive, 'Allura', serif;
+}
+
+.font-serif-display {
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-cormorant {
+  font-family: 'Cormorant Garamond', Garamond, Georgia, serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Smooth glass shimmer animation */
+@keyframes subtle-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: subtle-shimmer 8s infinite linear;
+}
