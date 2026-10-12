@@ -263,6 +263,27 @@ export function handleGoogleSheetApi(req, res, pathname) {
   });
 }
 
+export function handleHealthCheck(req, res) {
+  const payload = {
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    service: 'wedding-invitation',
+    env: process.env.NODE_ENV || 'production'
+  };
+
+  res.writeHead(200, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate'
+  });
+
+  if (req.method === 'HEAD') {
+    return res.end();
+  }
+
+  return res.end(JSON.stringify(payload, null, 2));
+}
+
 export function handleRsvpPost(req, res) {
   let body = '';
   req.on('data', chunk => {
@@ -1155,7 +1176,9 @@ function escapeHtml(str) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const server = http.createServer((req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
-    const pathname = parsedUrl.pathname;
+    if ((req.method === 'GET' || req.method === 'HEAD') && (pathname === '/health' || pathname === '/api/health')) {
+      return handleHealthCheck(req, res);
+    }
 
     if (req.method === 'POST' && pathname === '/api/rsvp') {
       return handleRsvpPost(req, res);

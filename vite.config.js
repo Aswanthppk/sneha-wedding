@@ -8,7 +8,8 @@ import {
   handleAdminLogin,
   handleAdminLogout,
   isAuthenticated,
-  handleGoogleSheetApi
+  handleGoogleSheetApi,
+  handleHealthCheck
 } from './server.js';
 
 function rsvpBackendPlugin() {
@@ -17,6 +18,9 @@ function rsvpBackendPlugin() {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = new URL(req.url, `http://${req.headers.host}`);
+        if ((req.method === 'GET' || req.method === 'HEAD') && (url.pathname === '/health' || url.pathname === '/api/health')) {
+          return handleHealthCheck(req, res);
+        }
         if (req.method === 'POST' && url.pathname === '/api/rsvp') {
           return handleRsvpPost(req, res);
         }

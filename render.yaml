@@ -3,6 +3,7 @@ services:
     name: wedding-invitation
     env: node
     plan: free
+    healthCheckPath: /api/health
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
