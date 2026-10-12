@@ -70,7 +70,7 @@ export default function RsvpForm() {
   return (
     <div className="relative w-[340px] h-[650px] md:w-[440px] md:h-[840px] mt-12 flex flex-col items-center">
       <img
-        src="/assets/rsvp-shape-z1pcPNfJ_1.webp"
+        src="/assets/rsvp-shape-z1pcPNfJ.webp"
         alt="RSVP Card Background"
         loading="lazy"
         decoding="async"
@@ -131,22 +131,20 @@ export default function RsvpForm() {
                 <button
                   type="button"
                   onClick={() => setAttending(true)}
-                  className={`rounded-md border px-2 py-1.5 md:px-3 md:py-2 font-display text-[11px] md:text-xs tracking-wide transition cursor-pointer ${
-                    attending === true
+                  className={`rounded-md border px-2 py-1.5 md:px-3 md:py-2 font-display text-[11px] md:text-xs tracking-wide transition cursor-pointer ${attending === true
                       ? 'bg-[#1a2c5b] border-[#1a2c5b] text-white'
                       : 'border-[#1a2c5b]/60 text-[#1a2c5b] hover:bg-[#1a2c5b]/5'
-                  }`}
+                    }`}
                 >
                   Joyfully Accept
                 </button>
                 <button
                   type="button"
                   onClick={() => setAttending(false)}
-                  className={`rounded-md border px-2 py-1.5 md:px-3 md:py-2 font-display text-[11px] md:text-xs tracking-wide transition cursor-pointer ${
-                    attending === false
+                  className={`rounded-md border px-2 py-1.5 md:px-3 md:py-2 font-display text-[11px] md:text-xs tracking-wide transition cursor-pointer ${attending === false
                       ? 'bg-[#1a2c5b] border-[#1a2c5b] text-white'
                       : 'border-[#1a2c5b]/60 text-[#1a2c5b] hover:bg-[#1a2c5b]/5'
-                  }`}
+                    }`}
                 >
                   Regretfully Decline
                 </button>
@@ -190,9 +188,8 @@ export default function RsvpForm() {
                       return (
                         <label
                           key={ev.id}
-                          className={`flex items-center justify-between rounded-md border border-[#1a2c5b] px-2 py-1 md:px-3 md:py-1.5 cursor-pointer transition ${
-                            isChecked ? 'bg-white/50 shadow-sm' : 'bg-transparent'
-                          }`}
+                          className={`flex items-center justify-between rounded-md border border-[#1a2c5b] px-2 py-1 md:px-3 md:py-1.5 cursor-pointer transition ${isChecked ? 'bg-white/50 shadow-sm' : 'bg-transparent'
+                            }`}
                         >
                           <div className="flex flex-col gap-0.5 text-left">
                             <span className="font-display text-[#1a2c5b] text-[11px] md:text-xs leading-none font-semibold">
