@@ -106,15 +106,17 @@ export default function EnvelopeIntro({ onOpen }) {
   };
 
   useEffect(() => {
-    // Lock scroll while intro is visible
-    if (!isDismissed) {
+    // Lock scroll only while intro is actively presented, unlock as soon as opening/fading begins
+    if (!isDismissed && !isFading) {
       const original = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = original;
       };
+    } else {
+      document.body.style.overflow = '';
     }
-  }, [isDismissed]);
+  }, [isDismissed, isFading]);
 
   if (isDismissed) return null;
 

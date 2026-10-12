@@ -53,8 +53,8 @@ function BirdSvg({ flapDuration }) {
 export default function AmbientEffects() {
   return (
     <>
-      {/* Flying Birds */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-10 select-none">
+      {/* Flying Birds (desktop only to preserve mobile 60fps scrolling) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-10 select-none hidden md:block" style={{ contain: 'strict' }}>
         {birds.map((b) => (
           <div
             key={b.id}
@@ -76,12 +76,12 @@ export default function AmbientEffects() {
         ))}
       </div>
 
-      {/* Falling Petals & Leaves */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-10 select-none">
+      {/* Falling Petals & Leaves (lightweight on mobile) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-10 select-none" style={{ contain: 'strict' }}>
         {particles.map((p) => (
           <div
             key={p.id}
-            className="animate-petal"
+            className={`animate-petal ${p.id > 8 ? 'hidden md:block' : ''}`}
             style={{
               '--petal-duration': p.duration,
               '--petal-delay': p.delay,

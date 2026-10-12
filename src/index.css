@@ -9,6 +9,17 @@
   --card-radius-sm: 24px;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
 .font-script {
   font-family: 'Great Vibes', cursive, 'Allura', serif;
 }

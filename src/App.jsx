@@ -46,7 +46,7 @@ export default function App() {
   const [isScratched, setIsScratched] = useState(false);
 
   return (
-    <main className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
+    <main className="min-h-screen bg-background text-foreground relative">
       {/* 1. Video Envelope Opening Modal */}
       <EnvelopeIntro onOpen={() => setIsOpened(true)} />
 

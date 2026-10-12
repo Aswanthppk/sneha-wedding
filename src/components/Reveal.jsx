@@ -57,8 +57,7 @@ export default function Reveal({
       className={`transition-all ease-out ${getAnimationClass()} ${className}`}
       style={{
         transitionDuration: `${duration}ms`,
-        transitionDelay: `${delay}ms`,
-        willChange: 'transform, opacity'
+        transitionDelay: `${delay}ms`
       }}
     >
       {children}

@@ -64,6 +64,10 @@ export default function CeremonyGlassCard() {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseMove = (e) => {
+    // Only perform 3D tilt tracking on devices with a mouse/precision pointer, not on touch screens during scrolling
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+      return;
+    }
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -115,7 +119,7 @@ export default function CeremonyGlassCard() {
           transformStyle: 'preserve-3d',
           transition: isHovered ? 'transform 0.15s ease-out' : 'transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
-        className="w-full relative group rounded-[28px] sm:rounded-[36px] bg-[#fefdfb]/94 backdrop-blur-xl border border-[#c5a059]/25 ring-1 ring-white/80 shadow-[0_25px_65px_-15px_rgba(21,42,74,0.12),0_10px_30px_-5px_rgba(197,160,89,0.08)] py-12 px-6 sm:py-16 sm:px-12 md:px-20 text-center select-none overflow-hidden transition-shadow duration-500 hover:shadow-[0_30px_80px_-15px_rgba(21,42,74,0.18),0_12px_35px_-5px_rgba(197,160,89,0.14)]"
+        className="w-full relative group rounded-[28px] sm:rounded-[36px] bg-[#fefdfb]/96 md:backdrop-blur-xl border border-[#c5a059]/25 ring-1 ring-white/80 shadow-[0_25px_65px_-15px_rgba(21,42,74,0.12),0_10px_30px_-5px_rgba(197,160,89,0.08)] py-12 px-6 sm:py-16 sm:px-12 md:px-20 text-center select-none overflow-hidden transition-shadow duration-500 hover:shadow-[0_30px_80px_-15px_rgba(21,42,74,0.18),0_12px_35px_-5px_rgba(197,160,89,0.14)]"
       >
         {/* Subtle Pearl Shimmer that gently follows the cursor */}
         <div

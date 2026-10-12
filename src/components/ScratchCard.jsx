@@ -139,7 +139,7 @@ export default function ScratchCard({ onRevealed, children }) {
     <div
       ref={containerRef}
       className="relative mx-auto w-full aspect-[5/2] rounded-xl overflow-hidden border border-[var(--gold)]/30 shadow-md"
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: isRevealed ? 'auto' : 'pan-y' }}
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 backdrop-blur-md p-4 text-center">
         {children}
