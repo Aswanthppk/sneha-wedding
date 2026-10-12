@@ -74,6 +74,497 @@ export function handleRsvpPost(req, res) {
   });
 }
 
+import crypto from 'crypto';
+
+const SESSION_SECRET = process.env.SESSION_SECRET || 'sneha-vaishnav-wedding-admin-secret-2026';
+
+export function getAdminToken() {
+  const adminUser = process.env.ADMIN_USER || 'admin';
+  const adminPass = process.env.ADMIN_PASSWORD || 'sneha@2026';
+  return crypto.createHmac('sha256', SESSION_SECRET).update(`${adminUser}:${adminPass}`).digest('hex');
+}
+
+export function isAuthenticated(req) {
+  // 1. Check HttpOnly session cookie
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const cookies = Object.fromEntries(
+      cookieHeader.split(';').map(c => {
+        const [k, ...v] = c.trim().split('=');
+        return [k, decodeURIComponent(v.join('='))];
+      })
+    );
+    if (cookies.admin_session && cookies.admin_session === getAdminToken()) {
+      return true;
+    }
+  }
+
+  // 2. Allow fallback Basic auth for CLI/API scripts without triggering browser popup
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Basic ')) {
+    try {
+      const b64 = authHeader.split(' ')[1] || '';
+      const decoded = Buffer.from(b64, 'base64').toString('utf8');
+      const separatorIdx = decoded.indexOf(':');
+      const user = separatorIdx !== -1 ? decoded.substring(0, separatorIdx) : '';
+      const pass = separatorIdx !== -1 ? decoded.substring(separatorIdx + 1) : '';
+      const adminUser = process.env.ADMIN_USER || 'admin';
+      const adminPass = process.env.ADMIN_PASSWORD || 'sneha@2026';
+      if (user === adminUser && pass === adminPass) {
+        return true;
+      }
+    } catch (_) {}
+  }
+
+  return false;
+}
+
+export function checkAdminAuth(req, res) {
+  if (isAuthenticated(req)) return true;
+  res.writeHead(302, { Location: '/admin/login' });
+  res.end();
+  return false;
+}
+
+export function handleAdminLogin(req, res) {
+  let body = '';
+  req.on('data', chunk => {
+    body += chunk;
+  });
+  req.on('end', () => {
+    try {
+      let username = '';
+      let password = '';
+      let redirect = '/admin/rsvps';
+
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        const json = JSON.parse(body || '{}');
+        username = json.username || '';
+        password = json.password || '';
+        if (json.redirect) redirect = json.redirect;
+      } else {
+        const params = new URLSearchParams(body);
+        username = params.get('username') || '';
+        password = params.get('password') || '';
+        if (params.get('redirect')) redirect = params.get('redirect');
+      }
+
+      const adminUser = process.env.ADMIN_USER || 'admin';
+      const adminPass = process.env.ADMIN_PASSWORD || 'sneha@2026';
+
+      if (username.trim() === adminUser && password === adminPass) {
+        const token = getAdminToken();
+        const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+        const cookieVal = `admin_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+
+        if (contentType.includes('application/json')) {
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Set-Cookie': cookieVal
+          });
+          return res.end(JSON.stringify({ success: true, redirect }));
+        }
+
+        res.writeHead(302, {
+          'Location': redirect || '/admin/rsvps',
+          'Set-Cookie': cookieVal
+        });
+        return res.end();
+      }
+
+      // Invalid credentials
+      if (contentType.includes('application/json')) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: 'Invalid username or password' }));
+      }
+
+      res.writeHead(401, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(renderAdminLogin('Invalid username or password. Please try again.', redirect, username));
+    } catch (err) {
+      console.error('Login processing error:', err);
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(renderAdminLogin('An unexpected error occurred. Please try again.'));
+    }
+  });
+}
+
+export function handleAdminLogout(req, res) {
+  const cookieVal = 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  res.writeHead(302, {
+    'Location': '/admin/login',
+    'Set-Cookie': cookieVal
+  });
+  return res.end();
+}
+
+export function renderAdminLogin(error = '', redirectTo = '/admin/rsvps', initialUsername = '') {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Admin Login — Sneha & Vaishnav Wedding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 15%, #18283e 0%, #0d1726 55%, #060a12 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      color: #e2e8f0;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(197, 160, 89, 0.12) 0%, rgba(197, 160, 89, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+    }
+    .login-card {
+      background: rgba(14, 23, 38, 0.88);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      border-radius: 20px;
+      padding: 38px 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7),
+                  0 0 35px rgba(197, 160, 89, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .emblem-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .emblem {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(197, 160, 89, 0.2) 0%, rgba(197, 160, 89, 0.05) 70%);
+      border: 1px solid rgba(197, 160, 89, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(197, 160, 89, 0.25);
+    }
+    .title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 30px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #fcebc5 0%, #dfba73 50%, #c5a059 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-bottom: 22px;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.35), transparent);
+    }
+    .divider span {
+      color: #dfba73;
+      font-size: 11px;
+    }
+    .error-alert {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: shake 0.4s ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #dfba73;
+      margin-bottom: 8px;
+    }
+    .input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .field-icon {
+      position: absolute;
+      left: 14px;
+      color: #64748b;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: rgba(7, 12, 20, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 13px 42px 13px 44px;
+      font-size: 14px;
+      color: #ffffff;
+      font-family: inherit;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #dfba73;
+      background: rgba(7, 12, 20, 0.92);
+      box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.22);
+    }
+    .input-container:focus-within .field-icon {
+      color: #dfba73;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+    .toggle-password:hover {
+      color: #dfba73;
+    }
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #c5a059 0%, #dfba73 50%, #b88a3b 100%);
+      color: #0c1929;
+      border: none;
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.25);
+      transition: all 0.25s ease;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(197, 160, 89, 0.4);
+      filter: brightness(1.05);
+    }
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+    .btn-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .back-wrap {
+      text-align: center;
+      margin-top: 24px;
+    }
+    .back-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .back-link:hover {
+      color: #dfba73;
+    }
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 30px 22px;
+        border-radius: 16px;
+      }
+      .title {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="emblem-wrap">
+        <div class="emblem">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dfba73" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="title">Sneha &amp; Vaishnav</h1>
+      <p class="subtitle">RSVP Administration Portal</p>
+
+      <div class="divider"><span>✦</span></div>
+
+      ${error ? `
+        <div class="error-alert">
+          <span>⚠️</span>
+          <span>${escapeHtml(error)}</span>
+        </div>
+      ` : ''}
+
+      <form method="POST" action="/admin/login" id="loginForm">
+        <input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-container">
+            <span class="field-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              autocomplete="username"
+              placeholder="Enter username"
+              value="${escapeHtml(initialUsername)}"
+              ${initialUsername ? '' : 'autofocus'}
+              spellcheck="false"
+              autocapitalize="none"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-container">
+            <span class="field-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              placeholder="Enter password"
+              ${initialUsername ? 'autofocus' : ''}
+            />
+            <button type="button" class="toggle-password" id="togglePw" aria-label="Toggle password visibility" title="Show / Hide Password">
+              <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span>Sign In to Dashboard</span>
+          <span>→</span>
+        </button>
+      </form>
+
+      <div class="back-wrap">
+        <a href="/" class="back-link">
+          <span>←</span>
+          <span>Return to Wedding Invitation</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pwInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('togglePw');
+    const eyeIcon = document.getElementById('eyeIcon');
+    const form = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = pwInput.type === 'password';
+      pwInput.type = isPassword ? 'text' : 'password';
+      eyeIcon.innerHTML = isPassword
+        ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
+        : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    });
+
+    form.addEventListener('submit', () => {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying credentials...</span>';
+    });
+  </script>
+</body>
+</html>`;
+}
+
 export function renderAdminDashboard(rsvps) {
   const total = rsvps.length;
   const attendingCount = rsvps.filter(r => r.attending).length;
@@ -134,9 +625,10 @@ export function renderAdminDashboard(rsvps) {
             <h1>💍 Sneha & Vaishnav — RSVP Responses</h1>
             <p style="margin:4px 0 0 0; color:#64748b; font-size:14px;">Real-time guest attendance records</p>
           </div>
-          <div>
-            <a href="/" class="btn" style="background:#fff; color:#1e293b; border:1px solid #cbd5e1; margin-right:8px;">← View Website</a>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <a href="/" class="btn" style="background:#fff; color:#1e293b; border:1px solid #cbd5e1;">← View Website</a>
             <button onclick="window.location.reload()" class="btn">↻ Refresh</button>
+            <a href="/admin/logout" class="btn" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;">🚪 Sign Out</a>
           </div>
         </div>
 
@@ -198,11 +690,39 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (req.method === 'POST' && pathname === '/api/rsvp') {
       return handleRsvpPost(req, res);
     }
+
+    if (pathname === '/admin/login') {
+      if (req.method === 'POST') {
+        return handleAdminLogin(req, res);
+      }
+      if (req.method === 'GET') {
+        if (isAuthenticated(req)) {
+          res.writeHead(302, { Location: '/admin/rsvps' });
+          return res.end();
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(renderAdminLogin('', parsedUrl.searchParams.get('redirect') || '/admin/rsvps'));
+      }
+    }
+
+    if (req.method === 'GET' && pathname === '/admin/logout') {
+      return handleAdminLogout(req, res);
+    }
+
     if (req.method === 'GET' && pathname === '/api/rsvps') {
+      if (!isAuthenticated(req)) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, rsvps: readRsvps() }));
     }
-    if (req.method === 'GET' && (pathname === '/admin/rsvps' || pathname === '/admin')) {
+
+    if (req.method === 'GET' && (pathname === '/admin/rsvps' || pathname === '/admin/rvsps' || pathname === '/admin')) {
+      if (!isAuthenticated(req)) {
+        res.writeHead(302, { Location: '/admin/login?redirect=' + encodeURIComponent(pathname) });
+        return res.end();
+      }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       return res.end(renderAdminDashboard(readRsvps()));
     }
