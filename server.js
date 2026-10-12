@@ -241,6 +241,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       };
       const contentType = mimeTypes[ext] || 'application/octet-stream';
 
+      const isMedia = ['.mp4', '.mp3', '.webp', '.jpg', '.png', '.woff', '.woff2', '.ttf'].includes(ext);
+      const cacheControl = isMedia ? 'public, max-age=31536000, immutable' : 'public, max-age=3600';
+
       // Support HTTP Range requests (crucial for mobile iOS Safari & Chrome video streaming)
       const range = req.headers.range;
       if (range && (ext === '.mp4' || ext === '.mp3')) {
@@ -254,13 +257,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
           'Accept-Ranges': 'bytes',
           'Content-Length': chunksize,
           'Content-Type': contentType,
+          'Cache-Control': cacheControl,
         });
         fileStream.pipe(res);
       } else {
         res.writeHead(200, {
           'Content-Length': fileSize,
           'Content-Type': contentType,
-          'Accept-Ranges': 'bytes'
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': cacheControl,
         });
         fs.createReadStream(filePath).pipe(res);
       }

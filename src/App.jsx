@@ -143,11 +143,15 @@ export default function App() {
         <img
           src="/assets/families-bg-Bdmrjm8V.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 -z-10 h-full w-full object-cover object-center md:hidden select-none pointer-events-none"
         />
         <img
           src="/assets/families-bg-desktop-CemX6j0X.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 -z-10 h-full w-full object-cover object-center hidden md:block select-none pointer-events-none"
         />
 
@@ -326,13 +330,17 @@ export default function App() {
          -------------------------------------------------------------- */}
       <section id="schedule" className="relative isolate min-h-screen px-6 py-20 bg-[#e7ebf0]">
         <img
-          src="/assets/Kerala Backwaters Temple Watercolour Invitation.png"
+          src="/assets/kerala-temple-mobile.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center md:hidden"
         />
         <img
-          src="/assets/Kerala Backwaters Temple Invitation Background.png"
+          src="/assets/kerala-temple-desktop.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center hidden md:block"
         />
 
@@ -453,13 +461,17 @@ export default function App() {
          -------------------------------------------------------------- */}
       <section id="rsvp" className="relative min-h-screen pt-16 px-4 isolate flex flex-col items-center">
         <img
-          src="/assets/rsvp-bg-I-N3en4m.webp"
+          src="/assets/rsvp-bg-I-N3en4m_.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center md:hidden"
         />
         <img
-          src="/assets/rsvp-bg-desktop-DWfTKjol.webp"
+          src="/assets/rsvp-bg-desktop-optimized.webp"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center hidden md:block"
         />
 

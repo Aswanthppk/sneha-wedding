@@ -18,12 +18,24 @@ export default function StoryCarousel() {
   const prev = () => setIndex((i) => (i - 1 + storyPhotos.length) % storyPhotos.length);
   const next = () => setIndex((i) => (i + 1) % storyPhotos.length);
 
+  // Prefetch only adjacent photos during idle time instead of blocking initial page load
   useEffect(() => {
-    storyPhotos.forEach((p) => {
-      const img = new Image();
-      img.src = p.src;
-    });
-  }, []);
+    const nextIdx = (index + 1) % storyPhotos.length;
+    const prevIdx = (index - 1 + storyPhotos.length) % storyPhotos.length;
+    const prefetch = () => {
+      [nextIdx, prevIdx].forEach((i) => {
+        const img = new Image();
+        img.src = storyPhotos[i].src;
+      });
+    };
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(prefetch);
+      return () => window.cancelIdleCallback(id);
+    } else {
+      const timer = setTimeout(prefetch, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [index]);
 
   const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
   const handleTouchEnd = (e) => {

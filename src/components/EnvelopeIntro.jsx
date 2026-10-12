@@ -3,7 +3,9 @@ import React, { useRef, useState, useEffect } from 'react';
 export default function EnvelopeIntro({ onOpen }) {
   const videoRef = useRef(null);
   const safetyTimeoutRef = useRef(null);
+  const stallTimerRef = useRef(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [isFading, setIsFading] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -25,6 +27,9 @@ export default function EnvelopeIntro({ onOpen }) {
       if (safetyTimeoutRef.current) {
         clearTimeout(safetyTimeoutRef.current);
       }
+      if (stallTimerRef.current) {
+        clearTimeout(stallTimerRef.current);
+      }
     };
   }, []);
 
@@ -33,10 +38,36 @@ export default function EnvelopeIntro({ onOpen }) {
       clearTimeout(safetyTimeoutRef.current);
       safetyTimeoutRef.current = null;
     }
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+    setIsBuffering(false);
     setIsFading(true);
     setTimeout(() => {
       setIsDismissed(true);
     }, 1000);
+  };
+
+  const handleWaiting = () => {
+    if (hasStarted && !isFading) {
+      setIsBuffering(true);
+      // If stalled due to slow network for > 3.5s, gracefully reveal invitation
+      if (!stallTimerRef.current) {
+        stallTimerRef.current = setTimeout(() => {
+          console.warn('Network slow: gracefully revealing invitation rather than stalling');
+          handleVideoEnded();
+        }, 3500);
+      }
+    }
+  };
+
+  const handlePlaying = () => {
+    setIsBuffering(false);
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
   };
 
   const handleOpen = () => {
@@ -113,11 +144,45 @@ export default function EnvelopeIntro({ onOpen }) {
         disablePictureInPicture
         disableRemotePlayback
         onEnded={handleVideoEnded}
+        onWaiting={handleWaiting}
+        onPlaying={handlePlaying}
+        onCanPlay={handlePlaying}
+        onStalled={handleWaiting}
         onError={() => {
           console.warn('Video failed to load on device, revealing invitation');
           handleVideoEnded();
         }}
       />
+
+      {/* Gentle buffering indicator on slow network */}
+      {hasStarted && isBuffering && !isFading && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '36px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 25,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 20px',
+            borderRadius: '9999px',
+            background: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            color: '#ffffff',
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: '11px',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            pointerEvents: 'none'
+          }}
+        >
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f6d365' }} className="animate-ping" />
+          <span>Opening...</span>
+        </div>
+      )}
 
       {/* Skip button during playback */}
       {hasStarted && !isFading && (

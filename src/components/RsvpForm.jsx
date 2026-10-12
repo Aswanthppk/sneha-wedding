@@ -70,8 +70,10 @@ export default function RsvpForm() {
   return (
     <div className="relative w-[340px] h-[650px] md:w-[440px] md:h-[840px] mt-12 flex flex-col items-center">
       <img
-        src="/assets/rsvp-shape-z1pcPNfJ.webp"
+        src="/assets/rsvp-shape-z1pcPNfJ_1.webp"
         alt="RSVP Card Background"
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover drop-shadow-xl z-0"
       />
 

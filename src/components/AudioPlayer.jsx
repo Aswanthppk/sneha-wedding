@@ -35,7 +35,7 @@ export default function AudioPlayer({ autoPlayTrigger }) {
         ref={audioRef}
         src="https://suraj-libina.invitationmedia.in/__l5e/assets-v1/bcf23206-309d-41ed-9402-c3e6e175a05e/CantHelpFallingInLove.mp3"
         loop
-        preload="auto"
+        preload="none"
       />
       <button
         type="button"
