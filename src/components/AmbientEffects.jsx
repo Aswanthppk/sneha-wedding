@@ -53,8 +53,8 @@ function BirdSvg({ flapDuration }) {
 export default function AmbientEffects() {
   return (
     <>
-      {/* Flying Birds (desktop only to preserve mobile 60fps scrolling) */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-10 select-none hidden md:block" style={{ contain: 'strict' }}>
+      {/* Flying Birds */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-10 select-none" style={{ contain: 'strict' }}>
         {birds.map((b) => (
           <div
             key={b.id}
