@@ -12,3 +12,5 @@ services:
         value: admin
       - key: ADMIN_PASSWORD
         value: sneha@2026
+      - key: GOOGLE_SHEET_WEBHOOK_URL
+        sync: false

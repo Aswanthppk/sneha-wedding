@@ -7,7 +7,8 @@ import {
   renderAdminLogin,
   handleAdminLogin,
   handleAdminLogout,
-  isAuthenticated
+  isAuthenticated,
+  handleGoogleSheetApi
 } from './server.js';
 
 function rsvpBackendPlugin() {
@@ -18,6 +19,9 @@ function rsvpBackendPlugin() {
         const url = new URL(req.url, `http://${req.headers.host}`);
         if (req.method === 'POST' && url.pathname === '/api/rsvp') {
           return handleRsvpPost(req, res);
+        }
+        if (url.pathname.startsWith('/api/admin/google-sheet/')) {
+          return handleGoogleSheetApi(req, res, url.pathname);
         }
         if (url.pathname === '/admin/login') {
           if (req.method === 'POST') {
