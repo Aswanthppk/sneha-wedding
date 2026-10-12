@@ -1176,6 +1176,8 @@ function escapeHtml(str) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const server = http.createServer((req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = parsedUrl.pathname;
+
     if ((req.method === 'GET' || req.method === 'HEAD') && (pathname === '/health' || pathname === '/api/health')) {
       return handleHealthCheck(req, res);
     }
