@@ -133,13 +133,19 @@ export default function App() {
           </p>
           <GoldDivider />
         </Reveal>
+
+        {/* Seamless Watercolor Transition Layer to Families Section */}
+        <div className="watercolor-transition-hero-bottom" aria-hidden="true" />
       </section>
 
       {/* --------------------------------------------------------------
           SECTION 2: FAMILIES
           Background: Same as original
          -------------------------------------------------------------- */}
-      <section className="relative flex flex-col items-center justify-start min-h-screen py-10 px-4 text-center select-none overflow-hidden isolate bg-white">
+      <section className="relative flex flex-col items-center justify-start min-h-screen py-10 px-4 text-center select-none overflow-hidden isolate bg-[#ede5da]">
+        {/* Seamless Watercolor Transition Layer from Hero Section */}
+        <div className="watercolor-transition-families-top" aria-hidden="true" />
+
         <img
           src="/assets/families-bg-Bdmrjm8V.webp"
           alt=""
@@ -210,7 +216,7 @@ export default function App() {
                   Residence
                 </p>
                 <p className="font-display text-[0.6rem] sm:text-[0.65rem] md:text-xs text-[var(--muted-foreground)] tracking-wide leading-tight uppercase font-semibold">
-                  Pilanthottathil House{' '}
+                  Pilathottathil House{' '}
                   <span className="text-[var(--gold)] font-light italic lowercase">&amp;</span>
                   <br />
                   Kokkallur, Balussery, Kozhikode
@@ -269,6 +275,9 @@ export default function App() {
             <GoldDivider text="♥" className="mt-2.5" />
           </Reveal>
         </div>
+
+        {/* Seamless Watercolor Transition Layer to Schedule Section */}
+        <div className="watercolor-transition-families-bottom" aria-hidden="true" />
       </section>
 
       {/* --------------------------------------------------------------
@@ -328,7 +337,10 @@ export default function App() {
           SECTION 4: SCHEDULE & WEDDING MUHURTHAM
           Background: Uploaded Kerala Backwaters Temple Invitation Background
          -------------------------------------------------------------- */}
-      <section id="schedule" className="relative isolate min-h-screen px-6 py-20 bg-[#e7ebf0]">
+      <section id="schedule" className="relative isolate min-h-screen px-6 py-20 bg-[#ede5da]">
+        {/* Seamless Watercolor Transition Layer from Families Section */}
+        <div className="watercolor-transition-schedule-top" aria-hidden="true" />
+
         <img
           src="/assets/kerala-temple-mobile.webp"
           alt=""
@@ -365,6 +377,9 @@ export default function App() {
             <CeremonyGlassCard />
           </Reveal>
         </div>
+
+        {/* Seamless Watercolor Transition Layer to RSVP Section */}
+        <div className="watercolor-transition-schedule-bottom" aria-hidden="true" />
       </section>
 
       {/* --------------------------------------------------------------
@@ -372,87 +387,87 @@ export default function App() {
           Background: Uploaded Kerala Backwaters Watercolour Scene
          -------------------------------------------------------------- */}
       {false && (
-      <section id="reception" className="relative isolate min-h-screen px-6 py-20 bg-[#e7ebf0]">
-        <img
-          src="/assets/Kerala Temple Backwaters Watercolour Invitation.png"
-          alt=""
-          className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center md:hidden"
-        />
-        <img
-          src="/assets/Kerala Backwaters Watercolour Invitation Scene.png"
-          alt=""
-          className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center hidden md:block"
-        />
+        <section id="reception" className="relative isolate min-h-screen px-6 py-20 bg-[#e7ebf0]">
+          <img
+            src="/assets/Kerala Temple Backwaters Watercolour Invitation.png"
+            alt=""
+            className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center md:hidden"
+          />
+          <img
+            src="/assets/Kerala Backwaters Watercolour Invitation Scene.png"
+            alt=""
+            className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center hidden md:block"
+          />
 
-        <div className="relative w-full min-h-screen flex flex-col items-center justify-center pt-10 px-4 pb-20">
-          <Reveal animation="fade-down" duration={1000} className="text-center mb-8">
-            <h2 className="font-display text-3xl md:text-5xl text-primary font-medium tracking-[0.1em] uppercase">
-              WEDDING RECEPTION
-            </h2>
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <span className="h-[1px] w-8 bg-[var(--gold)]/40" />
-              <span className="text-[var(--gold)] text-[10px]">♥</span>
-              <span className="h-[1px] w-8 bg-[var(--gold)]/40" />
-            </div>
-            <p className="mt-3 font-caps text-xs md:text-sm text-primary tracking-[0.15em] font-semibold">
-              A CELEBRATION OF LOVE, JOY &amp; BLESSINGS
-            </p>
-            <div className="mt-3 flex items-center justify-center opacity-85">
-              <OrnateFlourish />
-            </div>
-          </Reveal>
+          <div className="relative w-full min-h-screen flex flex-col items-center justify-center pt-10 px-4 pb-20">
+            <Reveal animation="fade-down" duration={1000} className="text-center mb-8">
+              <h2 className="font-display text-3xl md:text-5xl text-primary font-medium tracking-[0.1em] uppercase">
+                WEDDING RECEPTION
+              </h2>
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <span className="h-[1px] w-8 bg-[var(--gold)]/40" />
+                <span className="text-[var(--gold)] text-[10px]">♥</span>
+                <span className="h-[1px] w-8 bg-[var(--gold)]/40" />
+              </div>
+              <p className="mt-3 font-caps text-xs md:text-sm text-primary tracking-[0.15em] font-semibold">
+                A CELEBRATION OF LOVE, JOY &amp; BLESSINGS
+              </p>
+              <div className="mt-3 flex items-center justify-center opacity-85">
+                <OrnateFlourish />
+              </div>
+            </Reveal>
 
-          {/* Reception Details Box */}
-          <Reveal animation="zoom-in" duration={1000} delay={200} className="w-full max-w-lg bg-white/70 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-[var(--gold)]/40 shadow-xl text-center z-10">
-            <h3 className="font-display text-lg md:text-2xl text-primary font-semibold tracking-[0.15em] uppercase">
-              28TH DECEMBER, 2026
-            </h3>
-            <p className="font-serif italic text-primary text-xs md:text-sm text-[var(--gold)] font-medium">
-              Monday
-            </p>
-            <div className="mt-2 flex items-center justify-center gap-2">
-              <span className="h-[1px] w-12 bg-[var(--gold)]/60" />
-              <span className="text-[var(--gold)] text-[8px]">♦</span>
-              <span className="h-[1px] w-12 bg-[var(--gold)]/60" />
-            </div>
+            {/* Reception Details Box */}
+            <Reveal animation="zoom-in" duration={1000} delay={200} className="w-full max-w-lg bg-white/70 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-[var(--gold)]/40 shadow-xl text-center z-10">
+              <h3 className="font-display text-lg md:text-2xl text-primary font-semibold tracking-[0.15em] uppercase">
+                28TH DECEMBER, 2026
+              </h3>
+              <p className="font-serif italic text-primary text-xs md:text-sm text-[var(--gold)] font-medium">
+                Monday
+              </p>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <span className="h-[1px] w-12 bg-[var(--gold)]/60" />
+                <span className="text-[var(--gold)] text-[8px]">♦</span>
+                <span className="h-[1px] w-12 bg-[var(--gold)]/60" />
+              </div>
 
-            <h1 className="font-script text-5xl md:text-6xl text-primary font-normal leading-none mt-6">
-              Evening Reception
-            </h1>
-            <div className="mt-4 flex items-center justify-center gap-4 text-primary font-bold text-lg md:text-xl tracking-widest">
-              <span className="h-[1px] w-6 bg-[var(--gold)]" />
-              4:00 PM – 9:00 PM
-              <span className="h-[1px] w-6 bg-[var(--gold)]" />
-            </div>
+              <h1 className="font-script text-5xl md:text-6xl text-primary font-normal leading-none mt-6">
+                Evening Reception
+              </h1>
+              <div className="mt-4 flex items-center justify-center gap-4 text-primary font-bold text-lg md:text-xl tracking-widest">
+                <span className="h-[1px] w-6 bg-[var(--gold)]" />
+                4:00 PM – 9:00 PM
+                <span className="h-[1px] w-6 bg-[var(--gold)]" />
+              </div>
 
-            <p className="mt-6 font-script text-3xl md:text-4xl text-[var(--gold)] font-normal">
-              Venue:
-            </p>
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=Convention+Centre+Muthalam+Kozhikode"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 font-mono text-sm md:text-base text-primary tracking-widest leading-relaxed font-semibold hover:text-[var(--gold)] transition-colors block"
-            >
-              Convention Centre
-              <br />
-              Muthalam, Kozhikode
-            </a>
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=Convention+Centre+Muthalam+Kozhikode"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-3 px-4 py-1.5 rounded-full border border-[var(--gold)] text-[var(--gold)] hover:bg-[var(--gold)]/10 font-caps text-xs tracking-wider transition-colors"
-            >
-              <span>📍</span> Open Google Maps
-            </a>
+              <p className="mt-6 font-script text-3xl md:text-4xl text-[var(--gold)] font-normal">
+                Venue:
+              </p>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Convention+Centre+Muthalam+Kozhikode"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 font-mono text-sm md:text-base text-primary tracking-widest leading-relaxed font-semibold hover:text-[var(--gold)] transition-colors block"
+              >
+                Convention Centre
+                <br />
+                Muthalam, Kozhikode
+              </a>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Convention+Centre+Muthalam+Kozhikode"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 px-4 py-1.5 rounded-full border border-[var(--gold)] text-[var(--gold)] hover:bg-[var(--gold)]/10 font-caps text-xs tracking-wider transition-colors"
+              >
+                <span>📍</span> Open Google Maps
+              </a>
 
-            <p className="mt-6 font-serif italic text-primary text-sm max-w-sm mx-auto border-t border-[var(--gold)]/20 pt-4">
-              “Join us for an evening of joyous celebrations, dining and blessings.”
-            </p>
-          </Reveal>
-        </div>
-      </section>
+              <p className="mt-6 font-serif italic text-primary text-sm max-w-sm mx-auto border-t border-[var(--gold)]/20 pt-4">
+                “Join us for an evening of joyous celebrations, dining and blessings.”
+              </p>
+            </Reveal>
+          </div>
+        </section>
       )}
 
       {/* --------------------------------------------------------------
@@ -460,8 +475,11 @@ export default function App() {
           Background: RSVP Background
          -------------------------------------------------------------- */}
       <section id="rsvp" className="relative min-h-screen pt-16 px-4 isolate flex flex-col items-center">
+        {/* Seamless Watercolor Transition Layer from Schedule Section */}
+        <div className="watercolor-transition-rsvp-top" aria-hidden="true" />
+
         <img
-          src="/assets/rsvp-bg-I-N3en4m_.webp"
+          src="/assets/rsvp-bg-I-N3en4m.webp"
           alt=""
           loading="lazy"
           decoding="async"

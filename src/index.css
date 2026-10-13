@@ -45,3 +45,266 @@ body {
 .animate-shimmer {
   animation: subtle-shimmer 8s infinite linear;
 }
+
+/* Ceremony Traditional Card & Legibility Styles */
+.ceremony-card {
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto;
+  background: linear-gradient(180deg, rgba(254, 252, 246, 0.96) 0%, rgba(250, 245, 235, 0.96) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  box-shadow: 0 25px 65px -15px rgba(21, 42, 74, 0.16), 0 10px 30px -5px rgba(197, 160, 89, 0.14);
+  border-radius: 30px;
+  color: var(--navy-deep);
+}
+
+@media (max-width: 640px) {
+  .ceremony-card {
+    max-width: 380px;
+    background: linear-gradient(180deg, rgba(254, 252, 246, 0.98) 0%, rgba(250, 245, 235, 0.98) 100%);
+    border-radius: 26px;
+    box-shadow: 0 15px 40px -10px rgba(21, 42, 74, 0.14), 0 6px 20px -3px rgba(197, 160, 89, 0.12);
+  }
+}
+
+.ceremony-card:hover {
+  box-shadow: 0 30px 80px -15px rgba(21, 42, 74, 0.22), 0 14px 38px -5px rgba(197, 160, 89, 0.20);
+}
+
+/* Traditional Burgundy / Maroon Google Maps Button */
+.traditional-maroon-btn {
+  background: linear-gradient(180deg, #5b1b24 0%, #441219 100%);
+  border: 1.2px solid #c5a059;
+  box-shadow: 0 4px 14px -1px rgba(68, 18, 25, 0.42), 0 2px 5px rgba(197, 160, 89, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  color: #f7f1e5;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  text-decoration: none;
+}
+
+.traditional-maroon-btn:hover {
+  background: linear-gradient(180deg, #6c212c 0%, #51161e 100%);
+  box-shadow: 0 6px 18px -1px rgba(68, 18, 25, 0.52), 0 3px 8px rgba(197, 160, 89, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.traditional-maroon-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* Wedding Card Canvas for Exact Stationery Artwork */
+.wedding-card-canvas {
+  container-type: inline-size;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  aspect-ratio: 941 / 1672;
+  background-image: url('/assets/ceremony-card-bg.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 20px 45px rgba(21, 42, 74, 0.22)) drop-shadow(0 6px 18px rgba(197, 160, 89, 0.18));
+}
+
+@media (max-width: 640px) {
+  .wedding-card-canvas {
+    max-width: 100%;
+    filter: drop-shadow(0 15px 35px rgba(21, 42, 74, 0.20)) drop-shadow(0 4px 12px rgba(197, 160, 89, 0.15));
+  }
+}
+
+.text-navy-deep {
+  color: #152a4a !important;
+}
+
+.text-gold-antique {
+  color: #c5a059 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Seamless Watercolor Transitions Across All Invitation Sections
+   Blends adjacent watercolor artworks softly into unified continuous paper
+----------------------------------------------------------------------------- */
+
+/* Transition 1: Hero to Families */
+.watercolor-transition-hero-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(226, 218, 208, 0) 0%,
+    rgba(226, 218, 208, 0.45) 45%,
+    rgba(226, 218, 208, 0.85) 80%,
+    rgb(226, 218, 208) 100%
+  );
+}
+
+.watercolor-transition-families-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgb(226, 218, 208) 0%,
+    rgba(226, 218, 208, 0.75) 35%,
+    rgba(226, 218, 208, 0.30) 70%,
+    rgba(226, 218, 208, 0) 100%
+  );
+}
+
+/* Transition 2: Families to Schedule */
+.watercolor-transition-families-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 125px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(215, 222, 228, 0) 0%,
+    rgba(202, 216, 228, 0.22) 35%,
+    rgba(220, 216, 210, 0.65) 70%,
+    rgba(215, 220, 226, 0.92) 90%,
+    rgb(212, 218, 224) 100%
+  );
+}
+
+.watercolor-transition-schedule-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgb(212, 218, 224) 0%,
+    rgba(212, 218, 224, 0.80) 30%,
+    rgba(212, 218, 224, 0.35) 70%,
+    rgba(212, 218, 224, 0) 100%
+  );
+}
+
+/* Transition 3: Schedule to RSVP */
+.watercolor-transition-schedule-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 125px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(230, 222, 212, 0) 0%,
+    rgba(210, 224, 236, 0.18) 35%,
+    rgba(230, 222, 212, 0.65) 70%,
+    rgba(230, 222, 212, 0.92) 90%,
+    rgb(230, 222, 212) 100%
+  );
+}
+
+.watercolor-transition-rsvp-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgb(230, 222, 212) 0%,
+    rgba(230, 222, 212, 0.85) 30%,
+    rgba(230, 222, 212, 0.35) 70%,
+    rgba(230, 222, 212, 0) 100%
+  );
+}
+
+@media (min-width: 768px) {
+  .watercolor-transition-hero-bottom {
+    height: 160px;
+    background: linear-gradient(
+      to bottom,
+      rgba(228, 220, 210, 0) 0%,
+      rgba(228, 220, 210, 0.45) 45%,
+      rgba(228, 220, 210, 0.85) 80%,
+      rgb(228, 220, 210) 100%
+    );
+  }
+
+  .watercolor-transition-families-top {
+    height: 70px;
+    background: linear-gradient(
+      to bottom,
+      rgb(228, 220, 210) 0%,
+      rgba(228, 220, 210, 0.75) 35%,
+      rgba(228, 220, 210, 0.30) 70%,
+      rgba(228, 220, 210, 0) 100%
+    );
+  }
+
+  .watercolor-transition-families-bottom {
+    height: 180px;
+    background: linear-gradient(
+      to bottom,
+      rgba(222, 222, 220, 0) 0%,
+      rgba(210, 220, 230, 0.22) 35%,
+      rgba(225, 222, 216, 0.65) 70%,
+      rgba(224, 222, 220, 0.92) 90%,
+      rgb(222, 222, 220) 100%
+    );
+  }
+
+  .watercolor-transition-schedule-top {
+    height: 70px;
+    background: linear-gradient(
+      to bottom,
+      rgb(222, 222, 220) 0%,
+      rgba(222, 222, 220, 0.80) 30%,
+      rgba(222, 222, 220, 0.35) 70%,
+      rgba(222, 222, 220, 0) 100%
+    );
+  }
+
+  .watercolor-transition-schedule-bottom {
+    height: 180px;
+    background: linear-gradient(
+      to bottom,
+      rgba(235, 228, 216, 0) 0%,
+      rgba(212, 225, 236, 0.20) 35%,
+      rgba(235, 228, 216, 0.65) 70%,
+      rgba(235, 228, 216, 0.92) 90%,
+      rgb(235, 228, 216) 100%
+    );
+  }
+
+  .watercolor-transition-rsvp-top {
+    height: 70px;
+    background: linear-gradient(
+      to bottom,
+      rgb(235, 228, 216) 0%,
+      rgba(235, 228, 216, 0.85) 30%,
+      rgba(235, 228, 216, 0.35) 70%,
+      rgba(235, 228, 216, 0) 100%
+    );
+  }
+}
+
