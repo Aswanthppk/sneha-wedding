@@ -104,7 +104,7 @@ body {
   width: 100%;
   margin: 0 auto;
   aspect-ratio: 941 / 1672;
-  background-image: url('/assets/ceremony-card-bg.png');
+  background-image: url('/assets/ceremony-card-bg.webp');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
@@ -308,3 +308,77 @@ body {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Interactive S & V Wax Seal Cover Animations & Focus Styles
+----------------------------------------------------------------------------- */
+/* Mobile Portrait Cover Container (941 / 1672) */
+.cover-artwork-container-desktop {
+  display: none !important;
+}
+
+.cover-artwork-container-mobile {
+  display: flex !important;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 941 / 1672;
+  width: max(100vw, calc(100dvh * 941 / 1672));
+  height: max(100dvh, calc(100vw * 1672 / 941));
+  flex-shrink: 0;
+}
+
+/* Desktop Landscape Cover Container (1672 / 941) */
+@media (min-width: 769px) {
+  .cover-artwork-container-mobile {
+    display: none !important;
+  }
+  .cover-artwork-container-desktop {
+    display: flex !important;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1672 / 941;
+    width: max(100vw, calc(100dvh * 1672 / 941));
+    height: max(100dvh, calc(100vw * 941 / 1672));
+    flex-shrink: 0;
+  }
+}
+
+@keyframes seal-gentle-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+  }
+  50% {
+    transform: scale(1.035);
+    filter: drop-shadow(0 8px 22px rgba(197, 160, 89, 0.45)) drop-shadow(0 3px 8px rgba(68, 18, 25, 0.4));
+  }
+}
+
+.cover-seal-pulsing {
+  animation: seal-gentle-pulse 3.2s infinite ease-in-out;
+}
+
+.cover-seal-wrapper:hover .cover-seal-pulsing,
+.cover-seal-wrapper:focus-within .cover-seal-pulsing {
+  animation: none;
+}
+
+.cover-seal-button {
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.cover-seal-button:focus-visible {
+  outline: 2.5px solid #c5a059 !important;
+  outline-offset: 6px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-seal-pulsing {
+    animation: none !important;
+  }
+  .cover-seal-image {
+    transition: none !important;
+  }
+}

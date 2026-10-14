@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import EnvelopeIntro from './components/EnvelopeIntro.jsx';
+import CoverSealIntro from './components/CoverSealIntro.jsx';
 import AmbientEffects from './components/AmbientEffects.jsx';
 import ScratchCard from './components/ScratchCard.jsx';
 import Countdown from './components/Countdown.jsx';
@@ -43,18 +43,22 @@ function OrnateFlourish({ className = 'w-32 md:w-40 text-[var(--gold)]' }) {
 
 export default function App() {
   const [isOpened, setIsOpened] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
   const [isScratched, setIsScratched] = useState(false);
 
   return (
     <main className="min-h-screen bg-background text-foreground relative">
-      {/* 1. Video Envelope Opening Modal */}
-      <EnvelopeIntro onOpen={() => setIsOpened(true)} />
+      {/* 1. S & V Wax Seal Portrait Opening Cover */}
+      <CoverSealIntro 
+        onOpen={() => setIsOpened(true)} 
+        onEntered={() => setHasEntered(true)} 
+      />
 
       {/* 2. Ambient Particles & Birds */}
       <AmbientEffects />
 
-      {/* 3. Audio Music Player */}
-      <AudioPlayer autoPlayTrigger={isOpened} />
+      {/* 3. Audio Music Player (starts only after entering into the page) */}
+      <AudioPlayer autoPlayTrigger={hasEntered} />
 
       {/* --------------------------------------------------------------
           SECTION 1: HERO / SAVE THE DATE
