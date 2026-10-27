@@ -9,13 +9,16 @@
     "preview": "vite preview --host --port 3000"
   },
   "dependencies": {
+    "@netlify/database": "^2.0.1",
     "canvas-confetti": "^1.9.4",
+    "drizzle-orm": "^1.0.0-beta.22",
     "lucide-react": "^1.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "drizzle-kit": "^1.0.0-beta.22",
     "vite": "^6.2.0"
   }
 }

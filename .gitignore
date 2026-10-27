@@ -4,3 +4,6 @@ dist
 *.log
 .system_generated
 .tempmediaStorage
+
+# Local Netlify folder
+.netlify
