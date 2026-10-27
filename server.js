@@ -1,79 +1,121 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { Readable } from 'stream';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const SERVER_FILE = fileURLToPath(import.meta.url);
+const ROOT_DIR = path.dirname(SERVER_FILE);
 
 const PORT = process.env.PORT || 3001;
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = path.join(ROOT_DIR, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'rsvps.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
-// Ensure data directory and file exist
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, '[]', 'utf8');
-}
-if (!fs.existsSync(SETTINGS_FILE)) {
-  fs.writeFileSync(SETTINGS_FILE, '{}', 'utf8');
+// ---------------------------------------------------------------------------
+// Storage
+// On Netlify (and under `netlify dev`) data lives in Netlify Database.
+// Running plain `node server.js` / `vite` without a database falls back to
+// local JSON files in ./data.
+// ---------------------------------------------------------------------------
+
+function useDatabase() {
+  return Boolean(process.env.NETLIFY_DB_URL);
 }
 
-export function readRsvps() {
-  try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(raw || '[]');
-  } catch (err) {
-    console.error('Error reading RSVPs:', err);
-    return [];
+let dbModulePromise;
+async function getDb() {
+  if (!dbModulePromise) {
+    dbModulePromise = Promise.all([import('./db/index.ts'), import('./db/schema.ts'), import('drizzle-orm')])
+      .then(([{ db }, schema, orm]) => ({ db, schema, orm }));
   }
+  return dbModulePromise;
 }
 
-export function saveRsvps(rsvps) {
+function ensureDataFiles() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '[]', 'utf8');
+  if (!fs.existsSync(SETTINGS_FILE)) fs.writeFileSync(SETTINGS_FILE, '{}', 'utf8');
+}
+
+function readJsonFile(file, fallback) {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(rsvps, null, 2), 'utf8');
-    return true;
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8') || JSON.stringify(fallback));
   } catch (err) {
-    console.error('Error saving RSVPs:', err);
-    return false;
+    console.error(`Error reading ${file}:`, err);
   }
+  return fallback;
 }
 
-export function readSettings() {
-  try {
-    if (fs.existsSync(SETTINGS_FILE)) {
-      const raw = fs.readFileSync(SETTINGS_FILE, 'utf8');
-      return JSON.parse(raw || '{}');
-    }
-  } catch (err) {
-    console.error('Error reading settings:', err);
-  }
-  return {};
+function writeJsonFile(file, value) {
+  ensureDataFiles();
+  fs.writeFileSync(file, JSON.stringify(value, null, 2), 'utf8');
 }
 
-export function saveSettings(settings) {
-  try {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
-    return true;
-  } catch (err) {
-    console.error('Error saving settings:', err);
-    return false;
-  }
+export async function readRsvps() {
+  if (!useDatabase()) return readJsonFile(DATA_FILE, []);
+
+  const { db, schema, orm } = await getDb();
+  const rows = await db.select().from(schema.rsvps).orderBy(orm.desc(schema.rsvps.submittedAt));
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    attending: r.attending,
+    guestCount: r.guestCount,
+    selectedEvents: r.selectedEvents || [],
+    submittedAt: new Date(r.submittedAt).toISOString()
+  }));
 }
 
-export function getGoogleSheetWebhookUrl() {
-  const settings = readSettings();
+export async function addRsvp(entry) {
+  if (!useDatabase()) {
+    const rsvps = readJsonFile(DATA_FILE, []);
+    rsvps.unshift(entry);
+    writeJsonFile(DATA_FILE, rsvps);
+    return;
+  }
+
+  const { db, schema } = await getDb();
+  await db.insert(schema.rsvps).values({ ...entry, submittedAt: new Date(entry.submittedAt) });
+}
+
+export async function readSettings() {
+  if (!useDatabase()) return readJsonFile(SETTINGS_FILE, {});
+
+  const { db, schema } = await getDb();
+  const rows = await db.select().from(schema.settings);
+  return Object.fromEntries(rows.map(r => [r.key, r.value]));
+}
+
+export async function saveSetting(key, value) {
+  if (!useDatabase()) {
+    const settings = readJsonFile(SETTINGS_FILE, {});
+    settings[key] = value;
+    writeJsonFile(SETTINGS_FILE, settings);
+    return;
+  }
+
+  const { db, schema } = await getDb();
+  await db.insert(schema.settings)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: schema.settings.key, set: { value } });
+}
+
+export async function getGoogleSheetWebhookUrl() {
+  const settings = await readSettings();
   if (settings.googleSheetWebhookUrl && typeof settings.googleSheetWebhookUrl === 'string') {
     return settings.googleSheetWebhookUrl.trim();
   }
   return (process.env.GOOGLE_SHEET_WEBHOOK_URL || '').trim();
 }
 
+// ---------------------------------------------------------------------------
+// Google Sheet sync
+// ---------------------------------------------------------------------------
+
 export async function syncRsvpToGoogleSheet(entry) {
-  const webhookUrl = getGoogleSheetWebhookUrl();
+  const webhookUrl = await getGoogleSheetWebhookUrl();
   if (!webhookUrl || webhookUrl.includes('/macros/library/')) {
     return { success: false, reason: 'Invalid or missing Google Sheet webhook URL' };
   }
@@ -115,7 +157,7 @@ export async function syncRsvpToGoogleSheet(entry) {
 }
 
 export async function syncAllToGoogleSheet(rsvps) {
-  const webhookUrl = getGoogleSheetWebhookUrl();
+  const webhookUrl = await getGoogleSheetWebhookUrl();
   if (!webhookUrl) {
     return { success: false, error: 'No Google Sheet webhook URL configured' };
   }
@@ -166,7 +208,7 @@ export async function syncAllToGoogleSheet(rsvps) {
 }
 
 export async function testGoogleSheetWebhook(testUrl) {
-  const webhookUrl = testUrl || getGoogleSheetWebhookUrl();
+  const webhookUrl = testUrl || await getGoogleSheetWebhookUrl();
   if (!webhookUrl) {
     return { success: false, error: 'No Google Sheet webhook URL provided' };
   }
@@ -220,50 +262,65 @@ export async function testGoogleSheetWebhook(testUrl) {
   }
 }
 
-export function handleGoogleSheetApi(req, res, pathname) {
-  if (!isAuthenticated(req)) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
-  }
+// ---------------------------------------------------------------------------
+// Request handlers (Web-standard Request -> Response, used by Netlify Functions,
+// the standalone Node server and the Vite dev server)
+// ---------------------------------------------------------------------------
 
-  let body = '';
-  req.on('data', chunk => { body += chunk; });
-  req.on('end', async () => {
-    try {
-      const data = body ? JSON.parse(body) : {};
+const ADMIN_PAGE_PATHS = ['/admin', '/admin/rsvps', '/admin/rvsps'];
 
-      if (pathname === '/api/admin/google-sheet/save') {
-        const url = (data.url || '').trim();
-        const settings = readSettings();
-        settings.googleSheetWebhookUrl = url;
-        saveSettings(settings);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, url }));
-      }
-
-      if (pathname === '/api/admin/google-sheet/test') {
-        const result = await testGoogleSheetWebhook(data.url);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify(result));
-      }
-
-      if (pathname === '/api/admin/google-sheet/sync-all') {
-        const result = await syncAllToGoogleSheet(readRsvps());
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify(result));
-      }
-
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Not found' }));
-    } catch (err) {
-      console.error('Google Sheet API error:', err);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: err.message }));
-    }
+function json(data, status = 200, headers = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...headers }
   });
 }
 
-export function handleHealthCheck(req, res) {
+function html(body, status = 200) {
+  return new Response(body, { status, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+function redirect(location, headers = {}) {
+  return new Response(null, { status: 302, headers: { Location: location, ...headers } });
+}
+
+function runInBackground(context, promise) {
+  if (context && typeof context.waitUntil === 'function') {
+    context.waitUntil(promise);
+  }
+}
+
+export async function handleGoogleSheetApi(request, pathname) {
+  if (!isAuthenticated(request)) {
+    return json({ success: false, error: 'Unauthorized' }, 401);
+  }
+
+  try {
+    const body = await request.text();
+    const data = body ? JSON.parse(body) : {};
+
+    if (pathname === '/api/admin/google-sheet/save') {
+      const url = (data.url || '').trim();
+      await saveSetting('googleSheetWebhookUrl', url);
+      return json({ success: true, url });
+    }
+
+    if (pathname === '/api/admin/google-sheet/test') {
+      return json(await testGoogleSheetWebhook(data.url));
+    }
+
+    if (pathname === '/api/admin/google-sheet/sync-all') {
+      return json(await syncAllToGoogleSheet(await readRsvps()));
+    }
+
+    return json({ success: false, error: 'Not found' }, 404);
+  } catch (err) {
+    console.error('Google Sheet API error:', err);
+    return json({ success: false, error: err.message }, 500);
+  }
+}
+
+export function handleHealthCheck(request) {
   const payload = {
     status: 'ok',
     uptime: Math.floor(process.uptime()),
@@ -272,72 +329,64 @@ export function handleHealthCheck(req, res) {
     env: process.env.NODE_ENV || 'production'
   };
 
-  res.writeHead(200, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store, must-revalidate'
-  });
-
-  if (req.method === 'HEAD') {
-    return res.end();
-  }
-
-  return res.end(JSON.stringify(payload, null, 2));
-}
-
-export function handleRsvpPost(req, res) {
-  let body = '';
-  req.on('data', chunk => {
-    body += chunk;
-  });
-  req.on('end', () => {
-    try {
-      const data = JSON.parse(body || '{}');
-      if (!data.name || typeof data.attending !== 'boolean') {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, error: 'Name and attending status are required' }));
-      }
-
-      const rsvps = readRsvps();
-      const newEntry = {
-        id: 'rsvp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-        name: data.name.trim(),
-        attending: data.attending,
-        guestCount: data.attending ? (parseInt(data.guestCount, 10) || 1) : 0,
-        selectedEvents: Array.isArray(data.selectedEvents) ? data.selectedEvents : [],
-        submittedAt: new Date().toISOString()
-      };
-
-      rsvps.unshift(newEntry);
-      saveRsvps(rsvps);
-
-      // Trigger automatic background sync to online Google Sheet
-      syncRsvpToGoogleSheet(newEntry).catch(err => {
-        console.error('Background Google Sheet sync error:', err);
-      });
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, id: newEntry.id, message: 'RSVP recorded successfully' }));
-    } catch (err) {
-      console.error('RSVP parsing error:', err);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Server error processing RSVP' }));
+  return new Response(request.method === 'HEAD' ? null : JSON.stringify(payload, null, 2), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
     }
   });
 }
 
-import crypto from 'crypto';
+export async function handleRsvpPost(request, context) {
+  try {
+    const body = await request.text();
+    const data = JSON.parse(body || '{}');
+    if (!data.name || typeof data.attending !== 'boolean') {
+      return json({ success: false, error: 'Name and attending status are required' }, 400);
+    }
+
+    const newEntry = {
+      id: 'rsvp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      name: data.name.trim(),
+      attending: data.attending,
+      guestCount: data.attending ? (parseInt(data.guestCount, 10) || 1) : 0,
+      selectedEvents: Array.isArray(data.selectedEvents) ? data.selectedEvents : [],
+      submittedAt: new Date().toISOString()
+    };
+
+    await addRsvp(newEntry);
+
+    // Trigger automatic background sync to online Google Sheet
+    const sync = syncRsvpToGoogleSheet(newEntry).catch(err => {
+      console.error('Background Google Sheet sync error:', err);
+    });
+    runInBackground(context, sync);
+
+    return json({ success: true, id: newEntry.id, message: 'RSVP recorded successfully' });
+  } catch (err) {
+    console.error('RSVP processing error:', err);
+    return json({ success: false, error: 'Server error processing RSVP' }, 500);
+  }
+}
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'sneha-vaishnav-wedding-admin-secret-2026';
 
+function getAdminCredentials() {
+  return {
+    adminUser: process.env.ADMIN_USER || 'admin',
+    adminPass: process.env.ADMIN_PASSWORD || 'sneha@2026'
+  };
+}
+
 export function getAdminToken() {
-  const adminUser = process.env.ADMIN_USER || 'admin';
-  const adminPass = process.env.ADMIN_PASSWORD || 'sneha@2026';
+  const { adminUser, adminPass } = getAdminCredentials();
   return crypto.createHmac('sha256', SESSION_SECRET).update(`${adminUser}:${adminPass}`).digest('hex');
 }
 
-export function isAuthenticated(req) {
+export function isAuthenticated(request) {
   // 1. Check HttpOnly session cookie
-  const cookieHeader = req.headers.cookie;
+  const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
     const cookies = Object.fromEntries(
       cookieHeader.split(';').map(c => {
@@ -351,7 +400,7 @@ export function isAuthenticated(req) {
   }
 
   // 2. Allow fallback Basic auth for CLI/API scripts without triggering browser popup
-  const authHeader = req.headers.authorization;
+  const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Basic ')) {
     try {
       const b64 = authHeader.split(' ')[1] || '';
@@ -359,8 +408,7 @@ export function isAuthenticated(req) {
       const separatorIdx = decoded.indexOf(':');
       const user = separatorIdx !== -1 ? decoded.substring(0, separatorIdx) : '';
       const pass = separatorIdx !== -1 ? decoded.substring(separatorIdx + 1) : '';
-      const adminUser = process.env.ADMIN_USER || 'admin';
-      const adminPass = process.env.ADMIN_PASSWORD || 'sneha@2026';
+      const { adminUser, adminPass } = getAdminCredentials();
       if (user === adminUser && pass === adminPass) {
         return true;
       }
@@ -370,83 +418,153 @@ export function isAuthenticated(req) {
   return false;
 }
 
-export function checkAdminAuth(req, res) {
-  if (isAuthenticated(req)) return true;
-  res.writeHead(302, { Location: '/admin/login' });
-  res.end();
-  return false;
-}
+export async function handleAdminLogin(request) {
+  try {
+    let username = '';
+    let password = '';
+    let redirectTo = '/admin/rsvps';
 
-export function handleAdminLogin(req, res) {
-  let body = '';
-  req.on('data', chunk => {
-    body += chunk;
-  });
-  req.on('end', () => {
-    try {
-      let username = '';
-      let password = '';
-      let redirect = '/admin/rsvps';
-
-      const contentType = req.headers['content-type'] || '';
-      if (contentType.includes('application/json')) {
-        const json = JSON.parse(body || '{}');
-        username = json.username || '';
-        password = json.password || '';
-        if (json.redirect) redirect = json.redirect;
-      } else {
-        const params = new URLSearchParams(body);
-        username = params.get('username') || '';
-        password = params.get('password') || '';
-        if (params.get('redirect')) redirect = params.get('redirect');
-      }
-
-      const adminUser = process.env.ADMIN_USER || 'admin';
-      const adminPass = process.env.ADMIN_PASSWORD || 'sneha@2026';
-
-      if (username.trim() === adminUser && password === adminPass) {
-        const token = getAdminToken();
-        const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
-        const cookieVal = `admin_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
-
-        if (contentType.includes('application/json')) {
-          res.writeHead(200, {
-            'Content-Type': 'application/json',
-            'Set-Cookie': cookieVal
-          });
-          return res.end(JSON.stringify({ success: true, redirect }));
-        }
-
-        res.writeHead(302, {
-          'Location': redirect || '/admin/rsvps',
-          'Set-Cookie': cookieVal
-        });
-        return res.end();
-      }
-
-      // Invalid credentials
-      if (contentType.includes('application/json')) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, error: 'Invalid username or password' }));
-      }
-
-      res.writeHead(401, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(renderAdminLogin('Invalid username or password. Please try again.', redirect, username));
-    } catch (err) {
-      console.error('Login processing error:', err);
-      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(renderAdminLogin('An unexpected error occurred. Please try again.'));
+    const body = await request.text();
+    const contentType = request.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+    if (isJson) {
+      const data = JSON.parse(body || '{}');
+      username = data.username || '';
+      password = data.password || '';
+      if (data.redirect) redirectTo = data.redirect;
+    } else {
+      const params = new URLSearchParams(body);
+      username = params.get('username') || '';
+      password = params.get('password') || '';
+      if (params.get('redirect')) redirectTo = params.get('redirect');
     }
+
+    // Only allow same-site relative redirects
+    if (!redirectTo.startsWith('/') || redirectTo.startsWith('//')) redirectTo = '/admin/rsvps';
+
+    const { adminUser, adminPass } = getAdminCredentials();
+
+    if (username.trim() === adminUser && password === adminPass) {
+      const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+      const cookieVal = `admin_session=${getAdminToken()}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+
+      if (isJson) {
+        return json({ success: true, redirect: redirectTo }, 200, { 'Set-Cookie': cookieVal });
+      }
+      return redirect(redirectTo, { 'Set-Cookie': cookieVal });
+    }
+
+    // Invalid credentials
+    if (isJson) {
+      return json({ success: false, error: 'Invalid username or password' }, 401);
+    }
+    return html(renderAdminLogin('Invalid username or password. Please try again.', redirectTo, username), 401);
+  } catch (err) {
+    console.error('Login processing error:', err);
+    return html(renderAdminLogin('An unexpected error occurred. Please try again.'), 500);
+  }
+}
+
+export function handleAdminLogout() {
+  const cookieVal = 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  return redirect('/admin/login', { 'Set-Cookie': cookieVal });
+}
+
+/**
+ * Routes a request to the matching backend handler.
+ * Returns null when no backend route matches (static files / SPA).
+ */
+export async function handleRequest(request, context) {
+  const url = new URL(request.url);
+  const { pathname } = url;
+  const method = request.method;
+
+  if ((method === 'GET' || method === 'HEAD') && (pathname === '/health' || pathname === '/api/health')) {
+    return handleHealthCheck(request);
+  }
+
+  if (method === 'POST' && pathname === '/api/rsvp') {
+    return handleRsvpPost(request, context);
+  }
+
+  if (pathname.startsWith('/api/admin/google-sheet/')) {
+    return handleGoogleSheetApi(request, pathname);
+  }
+
+  if (pathname === '/admin/login') {
+    if (method === 'POST') {
+      return handleAdminLogin(request);
+    }
+    if (method === 'GET') {
+      if (isAuthenticated(request)) return redirect('/admin/rsvps');
+      return html(renderAdminLogin('', url.searchParams.get('redirect') || '/admin/rsvps'));
+    }
+  }
+
+  if (method === 'GET' && pathname === '/admin/logout') {
+    return handleAdminLogout();
+  }
+
+  if (method === 'GET' && pathname === '/api/rsvps') {
+    if (!isAuthenticated(request)) {
+      return json({ success: false, error: 'Unauthorized' }, 401);
+    }
+    return json({ success: true, rsvps: await readRsvps() });
+  }
+
+  if (method === 'GET' && ADMIN_PAGE_PATHS.includes(pathname)) {
+    if (!isAuthenticated(request)) {
+      return redirect('/admin/login?redirect=' + encodeURIComponent(pathname));
+    }
+    const [rsvps, webhookUrl] = await Promise.all([readRsvps(), getGoogleSheetWebhookUrl()]);
+    return html(renderAdminDashboard(rsvps, webhookUrl));
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Node adapter (standalone server + Vite dev middleware)
+// ---------------------------------------------------------------------------
+
+function toWebRequest(req) {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (Array.isArray(value)) value.forEach(v => headers.append(key, v));
+    else if (value !== undefined) headers.set(key, value);
+  }
+  const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
+  return new Request(url, {
+    method: req.method,
+    headers,
+    body: hasBody ? Readable.toWeb(req) : undefined,
+    duplex: hasBody ? 'half' : undefined
   });
 }
 
-export function handleAdminLogout(req, res) {
-  const cookieVal = 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
-  res.writeHead(302, {
-    'Location': '/admin/login',
-    'Set-Cookie': cookieVal
+async function sendWebResponse(res, response) {
+  const headers = {};
+  response.headers.forEach((value, key) => {
+    if (key !== 'set-cookie') headers[key] = value;
   });
-  return res.end();
+  const cookies = response.headers.getSetCookie();
+  if (cookies.length) headers['set-cookie'] = cookies;
+  res.writeHead(response.status, headers);
+  res.end(response.body ? Buffer.from(await response.arrayBuffer()) : undefined);
+}
+
+/** Connect-style middleware: handles backend routes, otherwise calls next(). */
+export async function nodeMiddleware(req, res, next) {
+  try {
+    const response = await handleRequest(toWebRequest(req));
+    if (!response) return next();
+    await sendWebResponse(res, response);
+  } catch (err) {
+    console.error('Request handling error:', err);
+    if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Server error');
+  }
 }
 
 export function renderAdminLogin(error = '', redirectTo = '/admin/rsvps', initialUsername = '') {
@@ -816,12 +934,11 @@ export function renderAdminLogin(error = '', redirectTo = '/admin/rsvps', initia
 </html>`;
 }
 
-export function renderAdminDashboard(rsvps) {
+export function renderAdminDashboard(rsvps, webhookUrl = '') {
   const total = rsvps.length;
   const attendingCount = rsvps.filter(r => r.attending).length;
   const declinedCount = rsvps.filter(r => !r.attending).length;
   const totalGuests = rsvps.reduce((acc, r) => acc + (r.attending ? (r.guestCount || 1) : 0), 0);
-  const webhookUrl = getGoogleSheetWebhookUrl();
 
   const googleAppsScriptCode = `function doPost(e) {
   try {
@@ -1173,70 +1290,22 @@ function escapeHtml(str) {
 }
 
 // If run directly via `node server.js`
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const server = http.createServer((req, res) => {
+if (process.argv[1] === SERVER_FILE) {
+  const server = http.createServer((req, res) => nodeMiddleware(req, res, () => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     const pathname = parsedUrl.pathname;
 
-    if ((req.method === 'GET' || req.method === 'HEAD') && (pathname === '/health' || pathname === '/api/health')) {
-      return handleHealthCheck(req, res);
-    }
-
-    if (req.method === 'POST' && pathname === '/api/rsvp') {
-      return handleRsvpPost(req, res);
-    }
-
-    if (pathname.startsWith('/api/admin/google-sheet/')) {
-      return handleGoogleSheetApi(req, res, pathname);
-    }
-
-    if (pathname === '/admin/login') {
-      if (req.method === 'POST') {
-        return handleAdminLogin(req, res);
-      }
-      if (req.method === 'GET') {
-        if (isAuthenticated(req)) {
-          res.writeHead(302, { Location: '/admin/rsvps' });
-          return res.end();
-        }
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(renderAdminLogin('', parsedUrl.searchParams.get('redirect') || '/admin/rsvps'));
-      }
-    }
-
-    if (req.method === 'GET' && pathname === '/admin/logout') {
-      return handleAdminLogout(req, res);
-    }
-
-    if (req.method === 'GET' && pathname === '/api/rsvps') {
-      if (!isAuthenticated(req)) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
-      }
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, rsvps: readRsvps() }));
-    }
-
-    if (req.method === 'GET' && (pathname === '/admin/rsvps' || pathname === '/admin/rvsps' || pathname === '/admin')) {
-      if (!isAuthenticated(req)) {
-        res.writeHead(302, { Location: '/admin/login?redirect=' + encodeURIComponent(pathname) });
-        return res.end();
-      }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(renderAdminDashboard(readRsvps()));
-    }
-
     // Static files fallback
     let decodedPath = decodeURIComponent(pathname);
-    let filePath = path.join(__dirname, 'dist', decodedPath === '/' ? 'index.html' : decodedPath.replace(/^\//, ''));
+    let filePath = path.join(ROOT_DIR, 'dist', decodedPath === '/' ? 'index.html' : decodedPath.replace(/^\//, ''));
     
     if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
       // Also check root directory for public assets (assets, s, __l5e)
-      const rootPath = path.join(__dirname, decodedPath.replace(/^\//, ''));
+      const rootPath = path.join(ROOT_DIR, decodedPath.replace(/^\//, ''));
       if (fs.existsSync(rootPath) && fs.statSync(rootPath).isFile()) {
         filePath = rootPath;
       } else if (!pathname.startsWith('/api/') && !path.extname(pathname)) {
-        filePath = path.join(__dirname, 'dist', 'index.html');
+        filePath = path.join(ROOT_DIR, 'dist', 'index.html');
       }
     }
 
@@ -1292,7 +1361,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not found');
     }
-  });
+  }));
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`Backend server running on http://0.0.0.0:${PORT}`);
